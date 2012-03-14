@@ -15,16 +15,23 @@ pathes = do ->
     router: (join unit, 'routers'), view: (join unit, 'views')
   }
 
+testPaths = [
+  pathes.model,
+  pathes.collection,
+  pathes.router,
+  pathes.view
+]
+
 runMocha = (target) ->
   log 'Test started'
-  command = 'node' + path.join __dirname, 'node_modules', '.bin', 'mocha'
-  options = '-r should --growl --reporter spec'
+  command = join __dirname, 'node_modules', '.bin', 'mocha'
+  options = '-r expect.js --growl --reporter spec'
   args = "#{options} #{target}".trimRight().split(' ')
   spawn "#{command}", args, customFds: [0, 1, 2]
 
 expandPath = (target, callback) ->
   fs.readdir target, (error, files) ->
-    return callback "Files aren't found. path:'#{target}'" unless files    
+    return callback "Files aren't found. path:'#{target}'" unless files
     expansion = ''
     files
       .map (file) ->
@@ -44,7 +51,7 @@ task 'test', (options) ->
     count += 1
     emitter.emit 'expanded', paths if testPaths.length is count
   testPaths.forEach (testPath) ->
-    expandPath testPath, (result) ->
+    expandPath testPath, (e, result) ->
       target += result
       pathEmitter.emit 'finished', target
 
@@ -52,3 +59,4 @@ task 'test', (options) ->
   task "test:unit:#{type}", (options) ->
     expandPath pathes["#{type}s"], (error, target) ->
       runMocha target
+
